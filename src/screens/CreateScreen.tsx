@@ -7,6 +7,7 @@ import {
   Platform,
   Image,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import {
   TextInput,
@@ -17,6 +18,8 @@ import {
   Text,
   Snackbar,
   IconButton,
+  Portal,
+  Dialog,
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -47,9 +50,11 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageDialogVisible, setImageDialogVisible] = useState(false);
 
   useEffect(() => {
     (async () => {
+      // Solicitar permisos de ubicación
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         console.log('Permiso de ubicación denegado');
@@ -67,6 +72,35 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
     })();
   }, []);
 
+  const requestCameraPermission = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permiso requerido',
+        'Se necesita acceso a la cámara para tomar fotos.',
+        [{ text: 'OK' }]
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const takePhoto = async () => {
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) return;
+
+    let result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      allowsEditing: true,
+    });
+
+    if (!result.canceled) {
+      setImages(prev => [...prev, result.assets[0].uri]);
+      setImageDialogVisible(false);
+    }
+  };
+
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -77,6 +111,7 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
     if (!result.canceled) {
       const selectedUris = result.assets.map(asset => asset.uri);
       setImages(prev => [...prev, ...selectedUris]);
+      setImageDialogVisible(false);
     }
   };
 
@@ -121,6 +156,7 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
           longitude: location.longitude,
         } : null,
         userId: user ? user.uid : 'anonimo',
+        votes: 0,
         createdAt: serverTimestamp(), 
       };
 
@@ -214,7 +250,12 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
           </View>
 
           <View style={styles.imageSection}>
-            <Button icon="camera" mode="outlined" onPress={pickImage} disabled={isLoading}>
+            <Button 
+              icon="camera" 
+              mode="outlined" 
+              onPress={() => setImageDialogVisible(true)} 
+              disabled={isLoading}
+            >
               Agregar Fotos
             </Button>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
@@ -279,6 +320,33 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
         </View>
       </ScrollView>
 
+      <Portal>
+        <Dialog visible={imageDialogVisible} onDismiss={() => setImageDialogVisible(false)}>
+          <Dialog.Title>Agregar Imagen</Dialog.Title>
+          <Dialog.Content>
+            <Text>Selecciona una opción:</Text>
+          </Dialog.Content>
+          <Dialog.Actions style={styles.dialogActions}>
+            <Button 
+              icon="camera" 
+              onPress={takePhoto}
+              mode="contained"
+              style={styles.dialogButton}
+            >
+              Tomar Foto
+            </Button>
+            <Button 
+              icon="image" 
+              onPress={pickImage}
+              mode="contained"
+              style={styles.dialogButton}
+            >
+              Galería
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
       <Snackbar
         visible={snackbarVisible}
         onDismiss={() => setSnackbarVisible(false)}
@@ -337,4 +405,12 @@ const styles = StyleSheet.create({
   submitButton: { marginTop: 10, borderRadius: 8 },
   submitButtonContent: { paddingVertical: 8 },
   snackbar: { backgroundColor: '#43A047' },
+  dialogActions: { 
+    flexDirection: 'column', 
+    alignItems: 'stretch',
+    gap: 8,
+  },
+  dialogButton: { 
+    marginVertical: 4,
+  },
 });

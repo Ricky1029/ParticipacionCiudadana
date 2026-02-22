@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { View, FlatList, StyleSheet, Image, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { Card, Title, Paragraph, Button, Chip, Text } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Importaciones de Firebase
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, increment } from 'firebase/firestore';
-import { db } from '../../firebaseConfig'; 
+import { collection, query, orderBy, limit, startAfter, getDocs, doc, updateDoc, increment, setDoc, getDoc, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
+import { db, auth } from '../../firebaseConfig';
+import { signOut } from 'firebase/auth'; 
 
 import { Proposal, Helix } from '../types';
 import { useNavigation } from '@react-navigation/native';
@@ -30,40 +32,157 @@ const getHelixColor = (category: Helix): string => {
   return colors[category] || '#757575';
 };
 
+const PROPOSALS_PER_PAGE = 10;
+
 export default function HomeScreen() {
   // 3. Le pasamos el tipo al hook useNavigation
   const navigation = useNavigation<HomeScreenNavigationProp>();
   
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [userVotes, setUserVotes] = useState<Set<string>>(new Set());
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
-  // ... (el resto de tu lógica de useEffect y handleVote se queda IGUAL)
+  // Cargar primeras propuestas
   useEffect(() => {
-    const q = query(collection(db, 'proposals'), orderBy('createdAt', 'desc'));
+    loadInitialProposals();
+  }, []);
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+  const loadInitialProposals = async () => {
+    try {
+      setLoading(true);
+      const q = query(
+        collection(db, 'proposals'),
+        orderBy('createdAt', 'desc'),
+        limit(PROPOSALS_PER_PAGE)
+      );
+
+      const snapshot = await getDocs(q);
       const proposalsData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-      })) as Proposal[]; 
-      
-      setProposals(proposalsData);
-      setLoading(false);
-    });
+      })) as Proposal[];
 
-    return () => unsubscribe();
-  }, []);
+      setProposals(proposalsData);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      setHasMore(snapshot.docs.length === PROPOSALS_PER_PAGE);
+    } catch (error) {
+      console.error('Error al cargar propuestas:', error);
+      alert('Error al cargar propuestas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMoreProposals = async () => {
+    if (!hasMore || loadingMore || !lastDoc) return;
+
+    try {
+      setLoadingMore(true);
+      const q = query(
+        collection(db, 'proposals'),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastDoc),
+        limit(PROPOSALS_PER_PAGE)
+      );
+
+      const snapshot = await getDocs(q);
+      const newProposals = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Proposal[];
+
+      setProposals(prev => [...prev, ...newProposals]);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      setHasMore(snapshot.docs.length === PROPOSALS_PER_PAGE);
+    } catch (error) {
+      console.error('Error al cargar más propuestas:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Cargar votos del usuario
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user || proposals.length === 0) return;
+
+    const loadUserVotes = async () => {
+      const votesSet = new Set<string>();
+      
+      for (const proposal of proposals) {
+        const voteRef = doc(db, 'proposals', proposal.id, 'votes', user.uid);
+        const voteDoc = await getDoc(voteRef);
+        if (voteDoc.exists()) {
+          votesSet.add(proposal.id);
+        }
+      }
+      
+      setUserVotes(votesSet);
+    };
+
+    loadUserVotes();
+  }, [proposals]);
 
   const handleVote = async (id: string) => {
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        alert('Debes iniciar sesión para votar');
+        return;
+      }
+
+      // Verificar si ya votó
+      if (userVotes.has(id)) {
+        alert('Ya has votado por esta propuesta');
+        return;
+      }
+
+      // Crear documento de voto en subcolección
+      const voteRef = doc(db, 'proposals', id, 'votes', user.uid);
+      await setDoc(voteRef, {
+        userId: user.uid,
+        votedAt: new Date(),
+      });
+
+      // Incrementar contador de votos
       const proposalRef = doc(db, 'proposals', id);
       await updateDoc(proposalRef, {
         votes: increment(1)
       });
+
+      // Actualizar estado local
+      setUserVotes(prev => new Set(prev).add(id));
     } catch (error) {
       console.error("Error al votar:", error);
       alert("Hubo un error al registrar tu voto.");
     }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro que deseas cerrar sesión?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Sí, cerrar sesión',
+          onPress: async () => {
+            try {
+              await signOut(auth);
+            } catch (error) {
+              console.error('Error al cerrar sesión:', error);
+              alert('Error al cerrar sesión');
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading) {
@@ -75,65 +194,99 @@ export default function HomeScreen() {
     );
   }
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Title style={styles.title}>ColaboraMX</Title>
-        <Paragraph style={styles.subtitle}>
-          Conectando Gobierno, Academia, Empresas y Comunidades
-        </Paragraph>
-      </View>
+  const renderProposal = ({ item: proposal }: { item: Proposal }) => {
+    const hasVoted = userVotes.has(proposal.id);
 
-      {proposals.length === 0 ? (
-        <View style={styles.centerContainer}>
-          <Text>Aún no hay propuestas. ¡Sé el primero en crear una!</Text>
-        </View>
-      ) : (
-        proposals.map((proposal) => (
-          <Card 
-            key={proposal.id} 
-            style={styles.card} 
-            // ¡Esta línea ya la tenías bien! TypeScript ahora la entenderá.
-            onPress={() => navigation.navigate('ProposalDetail', { proposal: proposal })}
+    return (
+      <Card
+        style={styles.card}
+        onPress={() => navigation.navigate('ProposalDetail', { proposal: proposal })}
+      >
+        {proposal.imageUrls && proposal.imageUrls.length > 0 && (
+          <Card.Cover source={{ uri: proposal.imageUrls[0] }} style={styles.cardImage} />
+        )}
+
+        <Card.Content style={{ paddingTop: 10 }}>
+          <View style={styles.cardHeader}>
+            <Chip
+              style={[
+                styles.chip,
+                { backgroundColor: getHelixColor(proposal.category) },
+              ]}
+              textStyle={styles.chipText}
+            >
+              {proposal.category}
+            </Chip>
+            <Text style={styles.votes}>❤️ {proposal.votes || 0}</Text>
+          </View>
+
+          <Title style={styles.cardTitle}>{proposal.title}</Title>
+          <Paragraph style={styles.description}>
+            {proposal.description}
+          </Paragraph>
+        </Card.Content>
+
+        <Card.Actions style={styles.actions}>
+          <Button
+            mode="contained"
+            onPress={() => handleVote(proposal.id)}
+            style={[styles.voteButton, { backgroundColor: hasVoted ? '#9E9E9E' : '#43A047' }]}
+            icon={hasVoted ? "check" : "thumb-up"}
+            disabled={hasVoted}
           >
-            {proposal.imageUrls && proposal.imageUrls.length > 0 && (
-              <Card.Cover source={{ uri: proposal.imageUrls[0] }} style={styles.cardImage} />
-            )}
-            
-            <Card.Content style={{ paddingTop: 10 }}>
-              <View style={styles.cardHeader}>
-                <Chip
-                  style={[
-                    styles.chip,
-                    { backgroundColor: getHelixColor(proposal.category) },
-                  ]}
-                  textStyle={styles.chipText}
-                >
-                  {proposal.category}
-                </Chip>
-                <Text style={styles.votes}>❤️ {proposal.votes || 0}</Text>
-              </View>
+            {hasVoted ? 'Ya votaste' : 'Votar'}
+          </Button>
+        </Card.Actions>
+      </Card>
+    );
+  };
 
-              <Title style={styles.cardTitle}>{proposal.title}</Title>
-              <Paragraph style={styles.description}>
-                {proposal.description}
-              </Paragraph>
-            </Card.Content>
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <View style={styles.headerContent}>
+        <View>
+          <Title style={styles.title}>ColaboraMX</Title>
+          <Paragraph style={styles.subtitle}>
+            Conectando Gobierno, Academia, Empresas y Comunidades
+          </Paragraph>
+        </View>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <MaterialCommunityIcons name="logout" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
-            <Card.Actions style={styles.actions}>
-              <Button
-                mode="contained"
-                onPress={() => handleVote(proposal.id)}
-                style={[styles.voteButton, { backgroundColor: '#43A047' }]}
-                icon="thumb-up"
-              >
-                Votar
-              </Button>
-            </Card.Actions>
-          </Card>
-        ))
-      )}
-    </ScrollView>
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#1E88E5" />
+        <Text style={{ marginLeft: 10 }}>Cargando más...</Text>
+      </View>
+    );
+  };
+
+  const renderEmpty = () => (
+    <View style={styles.centerContainer}>
+      <Text>Aún no hay propuestas. ¡Sé el primero en crear una!</Text>
+    </View>
+  );
+
+  return (
+    <FlatList
+      style={styles.container}
+      data={proposals}
+      renderItem={renderProposal}
+      keyExtractor={(item) => item.id}
+      ListHeaderComponent={renderHeader}
+      ListFooterComponent={renderFooter}
+      ListEmptyComponent={!loading ? renderEmpty : null}
+      onEndReached={loadMoreProposals}
+      onEndReachedThreshold={0.5}
+      refreshing={loading}
+      onRefresh={loadInitialProposals}
+    />
   );
 }
 
@@ -152,6 +305,14 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     backgroundColor: '#1E88E5',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  logoutButton: {
+    padding: 8,
   },
   title: {
     color: '#FFFFFF',
@@ -205,5 +366,11 @@ const styles = StyleSheet.create({
   },
   voteButton: {
     borderRadius: 8,
+  },
+  footerLoader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
 });

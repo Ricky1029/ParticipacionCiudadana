@@ -4,7 +4,7 @@ import { Title, Paragraph, Chip, Text, Divider, Button, TextInput, Avatar } from
 import MapView, { Marker } from 'react-native-maps';
 
 // Nuevas importaciones de Firebase
-import { doc, updateDoc, increment, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, increment, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig'; // Ajusta la ruta a tu config
 
 import { Proposal, Helix } from '../types';
@@ -38,6 +38,21 @@ export default function ProposalDetailScreen({ route }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+
+  // Verificar si el usuario ya votó
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const checkVote = async () => {
+      const voteRef = doc(db, 'proposals', proposal.id, 'votes', user.uid);
+      const voteDoc = await getDoc(voteRef);
+      setHasVoted(voteDoc.exists());
+    };
+
+    checkVote();
+  }, [proposal.id]);
 
   // Escuchar los comentarios en tiempo real
   useEffect(() => {
@@ -59,12 +74,37 @@ export default function ProposalDetailScreen({ route }) {
   // Función para votar (Apoyar)
   const handleVote = async () => {
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        alert('Debes iniciar sesión para votar');
+        return;
+      }
+
+      // Verificar si ya votó
+      if (hasVoted) {
+        alert('Ya has votado por esta propuesta');
+        return;
+      }
+
+      // Crear documento de voto en subcolección
+      const voteRef = doc(db, 'proposals', proposal.id, 'votes', user.uid);
+      await setDoc(voteRef, {
+        userId: user.uid,
+        votedAt: new Date(),
+      });
+
+      // Incrementar contador de votos
       const proposalRef = doc(db, 'proposals', proposal.id);
       await updateDoc(proposalRef, {
         votes: increment(1)
       });
-      // Actualizamos el estado local para que el número cambie al instante en la pantalla
-      setProposal(prev => ({ ...prev, votes: (prev.votes || 0) + 1 }));
+
+      // Actualizamos el estado local
+      setProposal(prev => ({ 
+        ...prev, 
+        votes: (prev.votes || 0) + 1
+      }));
+      setHasVoted(true);
     } catch (error) {
       console.error("Error al votar:", error);
       alert("Hubo un error al registrar tu apoyo.");
@@ -129,12 +169,13 @@ export default function ProposalDetailScreen({ route }) {
           {/* Botón de Apoyo */}
           <Button 
             mode="contained" 
-            icon="heart" 
+            icon={hasVoted ? "check" : "heart"}
             onPress={handleVote} 
-            style={styles.supportButton}
+            style={[styles.supportButton, hasVoted && { backgroundColor: '#9E9E9E' }]}
             contentStyle={{ paddingVertical: 8 }}
+            disabled={hasVoted}
           >
-            ¡Apoyo la propuesta!
+            {hasVoted ? '¡Ya apoyaste esta propuesta!' : '¡Apoyo la propuesta!'}
           </Button>
 
           <Divider style={styles.divider} />

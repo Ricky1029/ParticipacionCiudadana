@@ -1,17 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack'; // <-- IMPORTAMOS EL STACK
+import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from './firebaseConfig';
 
 // Importación de Pantallas
 import HomeScreen from './src/screens/HomeScreen';
 import CreateScreen from './src/screens/CreateScreen';
 import RankingScreen from './src/screens/RankingScreen';
-import ProposalDetailScreen from './src/screens/ProposalDetailScreen'; // <-- NUEVA PANTALLA
+import ProposalDetailScreen from './src/screens/ProposalDetailScreen';
+import LoginScreen from './src/screens/LoginScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator(); // <-- CREAMOS EL STACK
@@ -62,30 +66,71 @@ function MainTabs() {
 
 // 2. El App principal ahora usa el Stack Navigator
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Observador de estado de autenticación
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+      setIsLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // Mostrar pantalla de carga mientras se verifica la autenticación
+  if (isLoading) {
+    return (
+      <SafeAreaProvider>
+        <PaperProvider>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#1E88E5" />
+          </View>
+        </PaperProvider>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <PaperProvider>
-        <NavigationContainer>
-          <StatusBar style="light" />
-          <Stack.Navigator>
-            
-            {/* Pantalla base: Las Pestañas (ocultamos el header del stack aquí) */}
-            <Stack.Screen 
-              name="MainTabs" 
-              component={MainTabs} 
-              options={{ headerShown: false }} 
-            />
+        <StatusBar hidden={true} />
+        {!isAuthenticated ? (
+          // Mostrar pantalla de login si no está autenticado
+          <LoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />
+        ) : (
+          // Mostrar la app principal si está autenticado
+          <NavigationContainer>
+            <Stack.Navigator>
+              
+              {/* Pantalla base: Las Pestañas (ocultamos el header del stack aquí) */}
+              <Stack.Screen 
+                name="MainTabs" 
+                component={MainTabs} 
+                options={{ headerShown: false }} 
+              />
 
-            {/* Pantalla sobrepuesta: El Detalle de la Propuesta */}
-            <Stack.Screen 
-              name="ProposalDetail" 
-              component={ProposalDetailScreen} 
-              options={{ title: 'Detalle de la Propuesta' }} // Aparecerá en la cabecera
-            />
-            
-          </Stack.Navigator>
-        </NavigationContainer>
+              {/* Pantalla sobrepuesta: El Detalle de la Propuesta */}
+              <Stack.Screen 
+                name="ProposalDetail" 
+                component={ProposalDetailScreen} 
+                options={{ title: 'Detalle de la Propuesta' }} 
+              />
+              
+            </Stack.Navigator>
+          </NavigationContainer>
+        )}
       </PaperProvider>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+});

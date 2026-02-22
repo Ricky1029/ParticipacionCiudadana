@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 // Importaciones de Firebase
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'; // Asegúrate de que la ruta sea la correcta
 
 import { Proposal, Helix } from '../types';
@@ -42,7 +42,12 @@ export default function RankingScreen() {
 
   useEffect(() => {
     // Consultamos la colección ordenada directamente por "votes" de mayor a menor (desc)
-    const q = query(collection(db, 'proposals'), orderBy('votes', 'desc'));
+    // Limitamos a las top 50 propuestas para mejor rendimiento
+    const q = query(
+      collection(db, 'proposals'), 
+      orderBy('votes', 'desc'),
+      limit(50)
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const proposalsData = snapshot.docs.map((doc) => ({
