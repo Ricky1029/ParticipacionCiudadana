@@ -1,17 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { View, FlatList, StyleSheet, Image, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
-import { Card, Title, Paragraph, Button, Chip, Text } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
+import { Card, Title, Paragraph, Button, Chip, Text } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Importaciones de Firebase
-import { collection, query, orderBy, limit, startAfter, getDocs, doc, updateDoc, increment, setDoc, getDoc, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
-import { db, auth } from '../../firebaseConfig';
-import { signOut } from 'firebase/auth'; 
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  startAfter,
+  getDocs,
+  doc,
+  updateDoc,
+  increment,
+  setDoc,
+  getDoc,
+  DocumentData,
+  QueryDocumentSnapshot,
+} from "firebase/firestore";
+import { db, auth } from "../../firebaseConfig";
+import { signOut } from "firebase/auth";
 
-import { Proposal, Helix } from '../types';
-import { useNavigation } from '@react-navigation/native';
+import { Proposal, Helix } from "../types";
+import { useNavigation } from "@react-navigation/native";
 // IMPORTANTE: Importar el tipo de navegación adecuado (asumiendo Stack Navigation)
-import { StackNavigationProp } from '@react-navigation/stack'; 
+import { StackNavigationProp } from "@react-navigation/stack";
 
 // 1. Definimos los tipos de nuestras rutas y qué parámetros reciben
 type RootStackParamList = {
@@ -20,16 +42,16 @@ type RootStackParamList = {
 };
 
 // 2. Creamos un tipo específico para la navegación de esta pantalla
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
+type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, "Home">;
 
 const getHelixColor = (category: Helix): string => {
   const colors = {
-    Gobierno: '#1E88E5',
-    Academia: '#7B1FA2',
-    Empresa: '#43A047',
-    Comunidad: '#F57C00',
+    Gobierno: "#410525",
+    Academia: "#7B1FA2",
+    Empresa: "#43A047",
+    Comunidad: "#F57C00",
   };
-  return colors[category] || '#757575';
+  return colors[category] || "#757575";
 };
 
 const PROPOSALS_PER_PAGE = 10;
@@ -37,12 +59,13 @@ const PROPOSALS_PER_PAGE = 10;
 export default function HomeScreen() {
   // 3. Le pasamos el tipo al hook useNavigation
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  
+
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [userVotes, setUserVotes] = useState<Set<string>>(new Set());
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [lastDoc, setLastDoc] =
+    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   // Cargar primeras propuestas
@@ -54,9 +77,9 @@ export default function HomeScreen() {
     try {
       setLoading(true);
       const q = query(
-        collection(db, 'proposals'),
-        orderBy('createdAt', 'desc'),
-        limit(PROPOSALS_PER_PAGE)
+        collection(db, "proposals"),
+        orderBy("createdAt", "desc"),
+        limit(PROPOSALS_PER_PAGE),
       );
 
       const snapshot = await getDocs(q);
@@ -69,8 +92,8 @@ export default function HomeScreen() {
       setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
       setHasMore(snapshot.docs.length === PROPOSALS_PER_PAGE);
     } catch (error) {
-      console.error('Error al cargar propuestas:', error);
-      alert('Error al cargar propuestas');
+      console.error("Error al cargar propuestas:", error);
+      alert("Error al cargar propuestas");
     } finally {
       setLoading(false);
     }
@@ -82,10 +105,10 @@ export default function HomeScreen() {
     try {
       setLoadingMore(true);
       const q = query(
-        collection(db, 'proposals'),
-        orderBy('createdAt', 'desc'),
+        collection(db, "proposals"),
+        orderBy("createdAt", "desc"),
         startAfter(lastDoc),
-        limit(PROPOSALS_PER_PAGE)
+        limit(PROPOSALS_PER_PAGE),
       );
 
       const snapshot = await getDocs(q);
@@ -94,11 +117,11 @@ export default function HomeScreen() {
         ...doc.data(),
       })) as Proposal[];
 
-      setProposals(prev => [...prev, ...newProposals]);
+      setProposals((prev) => [...prev, ...newProposals]);
       setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
       setHasMore(snapshot.docs.length === PROPOSALS_PER_PAGE);
     } catch (error) {
-      console.error('Error al cargar más propuestas:', error);
+      console.error("Error al cargar más propuestas:", error);
     } finally {
       setLoadingMore(false);
     }
@@ -111,15 +134,15 @@ export default function HomeScreen() {
 
     const loadUserVotes = async () => {
       const votesSet = new Set<string>();
-      
+
       for (const proposal of proposals) {
-        const voteRef = doc(db, 'proposals', proposal.id, 'votes', user.uid);
+        const voteRef = doc(db, "proposals", proposal.id, "votes", user.uid);
         const voteDoc = await getDoc(voteRef);
         if (voteDoc.exists()) {
           votesSet.add(proposal.id);
         }
       }
-      
+
       setUserVotes(votesSet);
     };
 
@@ -130,31 +153,31 @@ export default function HomeScreen() {
     try {
       const user = auth.currentUser;
       if (!user) {
-        alert('Debes iniciar sesión para votar');
+        alert("Debes iniciar sesión para votar");
         return;
       }
 
       // Verificar si ya votó
       if (userVotes.has(id)) {
-        alert('Ya has votado por esta propuesta');
+        alert("Ya has votado por esta propuesta");
         return;
       }
 
       // Crear documento de voto en subcolección
-      const voteRef = doc(db, 'proposals', id, 'votes', user.uid);
+      const voteRef = doc(db, "proposals", id, "votes", user.uid);
       await setDoc(voteRef, {
         userId: user.uid,
         votedAt: new Date(),
       });
 
       // Incrementar contador de votos
-      const proposalRef = doc(db, 'proposals', id);
+      const proposalRef = doc(db, "proposals", id);
       await updateDoc(proposalRef, {
-        votes: increment(1)
+        votes: increment(1),
       });
 
       // Actualizar estado local
-      setUserVotes(prev => new Set(prev).add(id));
+      setUserVotes((prev) => new Set(prev).add(id));
     } catch (error) {
       console.error("Error al votar:", error);
       alert("Hubo un error al registrar tu voto.");
@@ -162,33 +185,29 @@ export default function HomeScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro que deseas cerrar sesión?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
+    Alert.alert("Cerrar Sesión", "¿Estás seguro que deseas cerrar sesión?", [
+      {
+        text: "Cancelar",
+        style: "cancel",
+      },
+      {
+        text: "Sí, cerrar sesión",
+        onPress: async () => {
+          try {
+            await signOut(auth);
+          } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+            alert("Error al cerrar sesión");
+          }
         },
-        {
-          text: 'Sí, cerrar sesión',
-          onPress: async () => {
-            try {
-              await signOut(auth);
-            } catch (error) {
-              console.error('Error al cerrar sesión:', error);
-              alert('Error al cerrar sesión');
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   };
 
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#1E88E5" />
+        <ActivityIndicator size="large" color="#410525" />
         <Text style={{ marginTop: 10 }}>Cargando propuestas...</Text>
       </View>
     );
@@ -200,10 +219,15 @@ export default function HomeScreen() {
     return (
       <Card
         style={styles.card}
-        onPress={() => navigation.navigate('ProposalDetail', { proposal: proposal })}
+        onPress={() =>
+          navigation.navigate("ProposalDetail", { proposal: proposal })
+        }
       >
         {proposal.imageUrls && proposal.imageUrls.length > 0 && (
-          <Card.Cover source={{ uri: proposal.imageUrls[0] }} style={styles.cardImage} />
+          <Card.Cover
+            source={{ uri: proposal.imageUrls[0] }}
+            style={styles.cardImage}
+          />
         )}
 
         <Card.Content style={{ paddingTop: 10 }}>
@@ -217,7 +241,10 @@ export default function HomeScreen() {
             >
               {proposal.category}
             </Chip>
-            <Text style={styles.votes}>❤️ {proposal.votes || 0}</Text>
+            <View style={styles.voteBadge}>
+              <MaterialCommunityIcons name="heart" size={16} color="#921051" />
+              <Text style={styles.votes}>{proposal.votes || 0}</Text>
+            </View>
           </View>
 
           <Title style={styles.cardTitle}>{proposal.title}</Title>
@@ -230,11 +257,14 @@ export default function HomeScreen() {
           <Button
             mode="contained"
             onPress={() => handleVote(proposal.id)}
-            style={[styles.voteButton, { backgroundColor: hasVoted ? '#9E9E9E' : '#43A047' }]}
+            style={[
+              styles.voteButton,
+              { backgroundColor: hasVoted ? "#bdbdbd" : "#c8500f" },
+            ]}
             icon={hasVoted ? "check" : "thumb-up"}
             disabled={hasVoted}
           >
-            {hasVoted ? 'Ya votaste' : 'Votar'}
+            {hasVoted ? "Ya votaste" : "Votar"}
           </Button>
         </Card.Actions>
       </Card>
@@ -242,19 +272,24 @@ export default function HomeScreen() {
   };
 
   const renderHeader = () => (
+    <SafeAreaView
+    edges={["top"]}
+    style={{ backgroundColor: "#410525" }}
+  >
     <View style={styles.header}>
       <View style={styles.headerContent}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Title style={styles.title}>ColaboraMX</Title>
           <Paragraph style={styles.subtitle}>
             Conectando Gobierno, Academia, Empresas y Comunidades
           </Paragraph>
         </View>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <MaterialCommunityIcons name="logout" size={28} color="#FFFFFF" />
+          <MaterialCommunityIcons name="logout" size={26} color="#f3d9e3" />
         </TouchableOpacity>
       </View>
     </View>
+    </SafeAreaView>
   );
 
   const renderFooter = () => {
@@ -293,84 +328,102 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#faf6f8",
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
     marginTop: 50,
   },
   header: {
     padding: 20,
-    backgroundColor: '#1E88E5',
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+    backgroundColor: "#410525",
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+  alignItems: "center",
   },
   logoutButton: {
     padding: 8,
+    marginLeft: 10,
   },
   title: {
-    color: '#FFFFFF',
-    fontSize: 28,
+    color: "#FFFFFF",
+    fontSize: 26,
+    fontWeight: "bold",
   },
   subtitle: {
-    color: '#FFFFFF',
+    color: "#f3d9e3",
     fontSize: 14,
-    marginTop: 5,
+    marginTop: 6,
   },
   card: {
-    margin: 12,
-    overflow: 'hidden', // Para que la imagen respete los bordes curvos de la tarjeta
+    marginHorizontal: 16,
+    marginVertical: 12,
+    borderRadius: 20,
+    elevation: 6,
+    backgroundColor: "#ffffff",
   },
   cardImage: {
-    height: 150,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+    height: 170,
   },
   cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 10,
   },
   chip: {
     height: 28,
   },
   chipText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 12,
   },
   votes: {
     fontSize: 16,
-    color: '#E91E63',
-    fontWeight: 'bold',
+    marginLeft: 6,
+    color: "#921051",
+    fontWeight: "bold",
   },
   cardTitle: {
-    fontSize: 18,
-    marginBottom: 8,
+    fontSize: 19,
+    fontWeight: "bold",
+    color: "#410525",
+    marginBottom: 6,
   },
   description: {
     fontSize: 14,
-    color: '#666',
+    color: "#555",
     lineHeight: 20,
   },
   actions: {
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
     paddingRight: 8,
     paddingBottom: 8,
   },
   voteButton: {
-    borderRadius: 8,
+    borderRadius: 30,
+    paddingHorizontal: 10,
   },
   footerLoader: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
+  },
+  voteBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f8e4ec",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
 });

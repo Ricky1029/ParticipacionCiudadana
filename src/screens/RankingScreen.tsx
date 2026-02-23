@@ -1,37 +1,72 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Text, ActivityIndicator } from 'react-native';
-import { Card, Title, Paragraph, Chip } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  ActivityIndicator,
+} from "react-native";
+import { Card, Title, Paragraph, Chip } from "react-native-paper";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 // Importaciones de Firebase
-import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
-import { db } from '../../firebaseConfig'; // Asegúrate de que la ruta sea la correcta
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  limit,
+} from "firebase/firestore";
+import { db } from "../../firebaseConfig"; // Asegúrate de que la ruta sea la correcta
 
-import { Proposal, Helix } from '../types';
+import { Proposal, Helix } from "../types";
 
 // Tipos para la navegación (para poder ir a los detalles)
 type RootStackParamList = {
   MainTabs: undefined;
   ProposalDetail: { proposal: Proposal };
 };
-type RankingScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MainTabs'>;
+type RankingScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "MainTabs"
+>;
 
 const getHelixColor = (category: Helix): string => {
   const colors = {
-    Gobierno: '#1E88E5',
-    Academia: '#7B1FA2',
-    Empresa: '#43A047',
-    Comunidad: '#F57C00',
+    Gobierno: "#410525",
+    Academia: "#7B1FA2",
+    Empresa: "#43A047",
+    Comunidad: "#F57C00",
   };
-  return colors[category] || '#757575';
+  return colors[category] || "#757575";
 };
 
-const getMedalEmoji = (position: number): string => {
-  if (position === 1) return '🥇';
-  if (position === 2) return '🥈';
-  if (position === 3) return '🥉';
-  return `${position}°`;
+const getMedalConfig = (position: number) => {
+  if (position === 1) {
+    return {
+      icon: "crown",
+      color: "#FFD700",
+      size: 32,
+    };
+  }
+  if (position === 2) {
+    return {
+      icon: "medal",
+      color: "#C0C0C0",
+      size: 26,
+    };
+  }
+  if (position === 3) {
+    return {
+      icon: "medal",
+      color: "#CD7F32",
+      size: 26,
+    };
+  }
+
+  return null;
 };
 
 // Ya no necesitamos recibir props
@@ -44,9 +79,9 @@ export default function RankingScreen() {
     // Consultamos la colección ordenada directamente por "votes" de mayor a menor (desc)
     // Limitamos a las top 50 propuestas para mejor rendimiento
     const q = query(
-      collection(db, 'proposals'), 
-      orderBy('votes', 'desc'),
-      limit(50)
+      collection(db, "proposals"),
+      orderBy("votes", "desc"),
+      limit(50),
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -54,7 +89,7 @@ export default function RankingScreen() {
         id: doc.id,
         ...doc.data(),
       })) as Proposal[];
-      
+
       setProposals(proposalsData);
       setLoading(false);
     });
@@ -65,7 +100,7 @@ export default function RankingScreen() {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#1E88E5" />
+        <ActivityIndicator size="large" color="#410525" />
         <Text style={{ marginTop: 10 }}>Cargando ranking...</Text>
       </View>
     );
@@ -91,18 +126,28 @@ export default function RankingScreen() {
               key={proposal.id}
               style={[
                 styles.card,
-                index < 3 && styles.topThreeCard,
+                index === 1 && styles.secondCard,
+                index === 2 && styles.thirdCard,
+                index === 0 && styles.firstCard,
               ]}
               // Agregamos la navegación al tocar la tarjeta
-              onPress={() => navigation.navigate('ProposalDetail', { proposal })}
+              onPress={() =>
+                navigation.navigate("ProposalDetail", { proposal })
+              }
             >
               <Card.Content style={styles.cardContent}>
                 <View style={styles.leftSection}>
-                  <Text style={styles.position}>
-                    {getMedalEmoji(index + 1)}
-                  </Text>
+                  {index < 3 ? (
+                    <MaterialCommunityIcons
+                      name={getMedalConfig(index + 1)?.icon as any}
+                      size={getMedalConfig(index + 1)?.size}
+                      color={getMedalConfig(index + 1)?.color}
+                    />
+                  ) : (
+                    <Text style={styles.positionNumber}>{index + 1}°</Text>
+                  )}
                 </View>
-                
+
                 <View style={styles.middleSection}>
                   <Text style={styles.proposalTitle} numberOfLines={2}>
                     {proposal.title}
@@ -113,13 +158,18 @@ export default function RankingScreen() {
                       { backgroundColor: getHelixColor(proposal.category) },
                     ]}
                     textStyle={styles.chipText}
+                    compact
                   >
                     {proposal.category}
                   </Chip>
                 </View>
-                
+
                 <View style={styles.rightSection}>
-                  <Text style={styles.votes}>❤️</Text>
+                  <MaterialCommunityIcons
+                    name="heart"
+                    size={20}
+                    color="#E91E63"
+                  />
                   <Text style={styles.votesNumber}>{proposal.votes || 0}</Text>
                 </View>
               </Card.Content>
@@ -134,49 +184,57 @@ export default function RankingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#FFFFFF",
   },
   centerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
     marginTop: 50,
   },
   header: {
-    padding: 20,
-    backgroundColor: '#1E88E5',
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    backgroundColor: "#410525",
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
   },
   title: {
-    color: '#FFFFFF',
-    fontSize: 28,
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
   },
   subtitle: {
-    color: '#FFFFFF',
+    color: "#f3d9e3",
     fontSize: 14,
-    marginTop: 5,
+    marginTop: 6,
   },
   listContainer: {
-    padding: 12,
+    padding: 16,
+    marginTop: -10,
+    paddingBottom: 40,
   },
   card: {
-    marginBottom: 12,
+    marginBottom: 14,
+    borderRadius: 16,
+    elevation: 2,
+    backgroundColor: "#FFFFFF",
   },
   topThreeCard: {
-    backgroundColor: '#FFF9E6',
+    borderWidth: 1,
+    borderColor: "#f3d9e3",
+    elevation: 3,
   },
   cardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
   },
   leftSection: {
-    width: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  position: {
-    fontSize: 28,
+    width: 60,
+    alignItems: "center",
+    justifyContent: "center",
   },
   middleSection: {
     flex: 1,
@@ -185,29 +243,53 @@ const styles = StyleSheet.create({
   proposalTitle: {
     fontSize: 16,
     marginBottom: 8,
-    color: '#333',
-    fontWeight: 'bold', // Le agregué negrita para que resalte más
+    color: "#333",
+    fontWeight: "bold", // Le agregué negrita para que resalte más
   },
   rightSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingLeft: 8,
   },
   votes: {
-    fontSize: 20,
+    fontSize: 18,
   },
   votesNumber: {
     fontSize: 18,
-    color: '#E91E63',
-    marginTop: 4,
-    fontWeight: 'bold', // Le agregué negrita para que resalte más
+    color: "#E91E63",
+    marginTop: 2,
+    fontWeight: "bold",
   },
   chip: {
-    height: 24,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
+    paddingHorizontal: 1,
   },
   chipText: {
-    color: '#FFFFFF',
-    fontSize: 10,
+    color: "#FFFFFF",
+    fontSize: 12,
+  },
+  firstCard: {
+    backgroundColor: "#FFF8E1",
+    borderWidth: 2,
+    borderColor: "#FFD700",
+    elevation: 6,
+  },
+
+  secondCard: {
+    backgroundColor: "#F5F5F5",
+    borderWidth: 1,
+    borderColor: "#C0C0C0",
+  },
+
+  thirdCard: {
+    backgroundColor: "#FBE9E7",
+    borderWidth: 1,
+    borderColor: "#CD7F32",
+  },
+
+  positionNumber: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#777",
   },
 });

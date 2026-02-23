@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   ScrollView,
@@ -8,7 +8,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
-} from 'react-native';
+} from "react-native";
 import {
   TextInput,
   Button,
@@ -20,33 +20,36 @@ import {
   IconButton,
   Portal,
   Dialog,
-} from 'react-native-paper';
-import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
-import MapView, { Marker } from 'react-native-maps'; // <-- Importamos el mapa y el marcador
+} from "react-native-paper";
+import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
+import MapView, { Marker } from "react-native-maps"; // <-- Importamos el mapa y el marcador
 
 // Firebase imports
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage, auth } from '../../firebaseConfig'; 
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage, auth } from "../../firebaseConfig";
 
-import { Helix } from '../types';
+import { Helix } from "../types";
 
 interface CreateScreenProps {
-  onCreateProposal?: () => void; 
+  onCreateProposal?: () => void;
 }
 
-const helices: Helix[] = ['Gobierno', 'Academia', 'Empresa', 'Comunidad'];
+const helices: Helix[] = ["Gobierno", "Academia", "Empresa", "Comunidad"];
 
 export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<Helix>('Gobierno');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<Helix>("Gobierno");
   const [images, setImages] = useState<string[]>([]);
-  
+
   // Simplificamos el estado para guardar solo latitud y longitud
-  const [location, setLocation] = useState<{latitude: number, longitude: number} | null>(null);
-  
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
   const [menuVisible, setMenuVisible] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -56,13 +59,13 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
     (async () => {
       // Solicitar permisos de ubicación
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        console.log('Permiso de ubicación denegado');
+      if (status !== "granted") {
+        console.log("Permiso de ubicación denegado");
         // Unas coordenadas de respaldo por si rechazan el permiso
-        setLocation({ latitude: 32.4580, longitude: -114.7320 }); 
+        setLocation({ latitude: 32.458, longitude: -114.732 });
         return;
       }
-      
+
       let currentLocation = await Location.getCurrentPositionAsync({});
       // Guardamos la ubicación actual como punto de partida
       setLocation({
@@ -74,11 +77,11 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
 
   const requestCameraPermission = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
+    if (status !== "granted") {
       Alert.alert(
-        'Permiso requerido',
-        'Se necesita acceso a la cámara para tomar fotos.',
-        [{ text: 'OK' }]
+        "Permiso requerido",
+        "Se necesita acceso a la cámara para tomar fotos.",
+        [{ text: "OK" }],
       );
       return false;
     }
@@ -96,7 +99,7 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
     });
 
     if (!result.canceled) {
-      setImages(prev => [...prev, result.assets[0].uri]);
+      setImages((prev) => [...prev, result.assets[0].uri]);
       setImageDialogVisible(false);
     }
   };
@@ -105,12 +108,12 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      quality: 0.7, 
+      quality: 0.7,
     });
 
     if (!result.canceled) {
-      const selectedUris = result.assets.map(asset => asset.uri);
-      setImages(prev => [...prev, ...selectedUris]);
+      const selectedUris = result.assets.map((asset) => asset.uri);
+      setImages((prev) => [...prev, ...selectedUris]);
       setImageDialogVisible(false);
     }
   };
@@ -125,10 +128,10 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
       const uri = images[i];
       const response = await fetch(uri);
       const blob = await response.blob();
-      
+
       const filename = `proposals/${Date.now()}_${i}.jpg`;
       const storageRef = ref(storage, filename);
-      
+
       await uploadBytes(storageRef, blob);
       const downloadUrl = await getDownloadURL(storageRef);
       urls.push(downloadUrl);
@@ -151,25 +154,26 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
         category,
         imageUrls,
         // Ahora location ya tiene el formato exacto que necesitamos
-        location: location ? {
-          latitude: location.latitude,
-          longitude: location.longitude,
-        } : null,
-        userId: user ? user.uid : 'anonimo',
+        location: location
+          ? {
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }
+          : null,
+        userId: user ? user.uid : "anonimo",
         votes: 0,
-        createdAt: serverTimestamp(), 
+        createdAt: serverTimestamp(),
       };
 
-      await addDoc(collection(db, 'proposals'), proposalData);
+      await addDoc(collection(db, "proposals"), proposalData);
 
-      setTitle('');
-      setDescription('');
-      setCategory('Gobierno');
+      setTitle("");
+      setDescription("");
+      setCategory("Gobierno");
       setImages([]);
       setSnackbarVisible(true);
-      
-      if (onCreateProposal) onCreateProposal();
 
+      if (onCreateProposal) onCreateProposal();
     } catch (error) {
       console.error("Error al guardar la propuesta: ", error);
       alert("Hubo un error al guardar tu propuesta.");
@@ -179,12 +183,16 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
   };
 
   // Agregamos una validación para asegurarnos de que el mapa haya cargado una ubicación
-  const isFormValid = title.trim().length > 0 && description.trim().length > 0 && location !== null && !isLoading;
+  const isFormValid =
+    title.trim().length > 0 &&
+    description.trim().length > 0 &&
+    location !== null &&
+    !isLoading;
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
@@ -201,6 +209,9 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
             onChangeText={setTitle}
             mode="outlined"
             style={styles.input}
+            activeOutlineColor="#921051"
+            outlineColor="#d8c3cc"
+            textColor="#410525"
             placeholder="Ej: Proyecto de Reciclaje Comunitario"
             maxLength={100}
             disabled={isLoading}
@@ -214,6 +225,9 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
             multiline={true}
             numberOfLines={6}
             style={[styles.input, styles.textArea]}
+            activeOutlineColor="#921051"
+            outlineColor="#d8c3cc"
+            textColor="#410525"
             placeholder="Describe tu propuesta en detalle..."
             maxLength={500}
             disabled={isLoading}
@@ -231,8 +245,11 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
                   style={styles.menuButton}
                   contentStyle={styles.menuButtonContent}
                   disabled={isLoading}
+                  textColor="#410525"
+                  icon="chevron-down"
+                  buttonColor="#fff"
                 >
-                  {category} ▼
+                  {category}
                 </Button>
               }
             >
@@ -250,15 +267,21 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
           </View>
 
           <View style={styles.imageSection}>
-            <Button 
-              icon="camera" 
-              mode="outlined" 
-              onPress={() => setImageDialogVisible(true)} 
+            <Button
+              icon="camera"
+              mode="contained"
+              buttonColor="#410525"
+              textColor="#ffffff"
+              onPress={() => setImageDialogVisible(true)}
               disabled={isLoading}
             >
               Agregar Fotos
             </Button>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.imageScroll}
+            >
               {images.map((uri, index) => (
                 <View key={index} style={styles.imagePreviewContainer}>
                   <Image source={{ uri }} style={styles.imagePreview} />
@@ -277,66 +300,77 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
 
           {/* Sección de Mapa Interactivo */}
           <View style={styles.locationContainer}>
-             <Text style={styles.label}>
-               📍 Ubicación: Toca el mapa para ajustar el marcador
-             </Text>
-             {location ? (
-               <View style={styles.mapWrapper}>
-                 <MapView
-                   style={styles.map}
-                   initialRegion={{
-                     latitude: location.latitude,
-                     longitude: location.longitude,
-                     latitudeDelta: 0.005, // Zoom inicial
-                     longitudeDelta: 0.005,
-                   }}
-                   // Al tocar cualquier parte del mapa, movemos el pin
-                   onPress={(e) => setLocation(e.nativeEvent.coordinate)}
-                 >
-                   <Marker 
-                     coordinate={location} 
-                     draggable // Permite mantener presionado y arrastrar
-                     onDragEnd={(e) => setLocation(e.nativeEvent.coordinate)}
-                   />
-                 </MapView>
-               </View>
-             ) : (
-               <View style={styles.mapPlaceholder}>
-                 <ActivityIndicator size="small" color="#1E88E5" />
-                 <Text style={{marginTop: 10, color: '#666'}}>Obteniendo ubicación...</Text>
-               </View>
-             )}
+            <Text style={styles.label}>
+              📍 Ubicación: Toca el mapa para ajustar el marcador
+            </Text>
+            {location ? (
+              <View style={styles.mapWrapper}>
+                <MapView
+                  style={styles.map}
+                  initialRegion={{
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    latitudeDelta: 0.005, // Zoom inicial
+                    longitudeDelta: 0.005,
+                  }}
+                  // Al tocar cualquier parte del mapa, movemos el pin
+                  onPress={(e) => setLocation(e.nativeEvent.coordinate)}
+                >
+                  <Marker
+                    coordinate={location}
+                    draggable // Permite mantener presionado y arrastrar
+                    onDragEnd={(e) => setLocation(e.nativeEvent.coordinate)}
+                  />
+                </MapView>
+              </View>
+            ) : (
+              <View style={styles.mapPlaceholder}>
+                <ActivityIndicator size="small" color="#410525" />
+                <Text style={{ marginTop: 10, color: "#666" }}>
+                  Obteniendo ubicación...
+                </Text>
+              </View>
+            )}
           </View>
 
           <Button
             mode="contained"
             onPress={handleSubmit}
             disabled={!isFormValid}
-            style={[styles.submitButton, { backgroundColor: isFormValid ? '#1E88E5' : '#ccc' }]}
-            contentStyle={styles.submitButtonContent}
+            buttonColor={isFormValid ? "#410525" : "#ccc"}
+            textColor="#ffffff"
+            style={styles.submitButton}
+            contentStyle={{ paddingVertical: 10 }}
           >
-            {isLoading ? <ActivityIndicator color="#fff" /> : "Publicar Propuesta"}
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              "Publicar Propuesta"
+            )}
           </Button>
         </View>
       </ScrollView>
 
       <Portal>
-        <Dialog visible={imageDialogVisible} onDismiss={() => setImageDialogVisible(false)}>
+        <Dialog
+          visible={imageDialogVisible}
+          onDismiss={() => setImageDialogVisible(false)}
+        >
           <Dialog.Title>Agregar Imagen</Dialog.Title>
           <Dialog.Content>
             <Text>Selecciona una opción:</Text>
           </Dialog.Content>
           <Dialog.Actions style={styles.dialogActions}>
-            <Button 
-              icon="camera" 
+            <Button
+              icon="camera"
               onPress={takePhoto}
               mode="contained"
               style={styles.dialogButton}
             >
               Tomar Foto
             </Button>
-            <Button 
-              icon="image" 
+            <Button
+              icon="image"
               onPress={pickImage}
               mode="contained"
               style={styles.dialogButton}
@@ -360,57 +394,83 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  container: { flex: 1, backgroundColor: "#F5F5F5" },
   scrollView: { flex: 1 },
-  header: { padding: 20, backgroundColor: '#1E88E5' },
-  title: { color: '#FFFFFF', fontSize: 28 },
-  subtitle: { color: '#FFFFFF', fontSize: 14, marginTop: 5 },
-  form: { padding: 20 },
-  input: { marginBottom: 16, backgroundColor: '#FFFFFF' },
+  header: {
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    backgroundColor: "#410525",
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  title: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  subtitle: {
+    color: "#f3d9e3",
+    fontSize: 14,
+    marginTop: 6,
+  },
+  form: { padding: 20, marginTop: -20 },
+  input: { marginBottom: 16, backgroundColor: "#FFFFFF" },
   textArea: { minHeight: 120 },
   menuContainer: { marginBottom: 20 },
-  label: { fontSize: 16, color: '#666', marginBottom: 8 },
-  menuButton: { justifyContent: 'flex-start', backgroundColor: '#FFFFFF' },
-  menuButtonContent: { flexDirection: 'row-reverse', justifyContent: 'space-between' },
+  label: { fontSize: 16, color: "#666", marginBottom: 8 },
+  menuButton: {
+    justifyContent: "space-between",
+    borderRadius: 16,
+    borderColor: "#d8c3cc",
+  },
+  menuButtonContent: {
+    flexDirection: "row-reverse",
+    justifyContent: "space-between",
+  },
   imageSection: { marginBottom: 20 },
-  imageScroll: { marginTop: 10, flexDirection: 'row' },
-  imagePreviewContainer: { marginRight: 10, position: 'relative' },
-  imagePreview: { width: 80, height: 80, borderRadius: 8 },
-  removeIcon: { position: 'absolute', top: -10, right: -10, backgroundColor: 'white' },
-  
+  imageScroll: { marginTop: 10, flexDirection: "row" },
+  imagePreviewContainer: { marginRight: 10, position: "relative" },
+  imagePreview: { width: 100, height: 100, borderRadius: 16 },
+  removeIcon: {
+    position: "absolute",
+    top: -10,
+    right: -10,
+    backgroundColor: "white",
+  },
+
   // Estilos nuevos para el mapa
   locationContainer: { marginBottom: 20 },
   mapWrapper: {
-    height: 200,
-    width: '100%',
-    borderRadius: 8,
-    overflow: 'hidden',
+    height: 220,
+    width: "100%",
+    borderRadius: 16,
+    overflow: "hidden",
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
   mapPlaceholder: {
     height: 200,
-    width: '100%',
+    width: "100%",
     borderRadius: 8,
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#e0e0e0",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 8,
   },
 
-  submitButton: { marginTop: 10, borderRadius: 8 },
+  submitButton: { marginTop: 20, borderRadius: 16, elevation: 3 },
   submitButtonContent: { paddingVertical: 8 },
-  snackbar: { backgroundColor: '#43A047' },
-  dialogActions: { 
-    flexDirection: 'column', 
-    alignItems: 'stretch',
+  snackbar: { backgroundColor: "#43A047" },
+  dialogActions: {
+    flexDirection: "column",
+    alignItems: "stretch",
     gap: 8,
   },
-  dialogButton: { 
+  dialogButton: {
     marginVertical: 4,
   },
 });
