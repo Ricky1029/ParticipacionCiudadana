@@ -9,15 +9,7 @@ import {
   Keyboard,
   Platform,
 } from "react-native";
-import {
-  Title,
-  Paragraph,
-  Chip,
-  Text,
-  Divider,
-  Button,
-  TextInput,
-  Avatar,
+import { Title, Paragraph, Chip, Text, Divider, Button, TextInput, Avatar,
 } from "react-native-paper";
 import MapView, { Marker } from "react-native-maps";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -329,8 +321,17 @@ export default function ProposalDetailScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF" },
-  image: { width: width, height: 250, resizeMode: "cover" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F4F6F8",
+  },
+
+  image: {
+    width: width,
+    height: 250,
+    resizeMode: "cover",
+  },
+
   noImageContainer: {
     width: width,
     height: 200,
@@ -338,72 +339,149 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  noImageText: { color: "#757575" },
-  content: { padding: 20 },
+
+  noImageText: {
+    color: "#757575",
+  },
+
+  content: {
+    padding: 20,
+  },
+
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 15,
   },
-  chip: { height: 28 },
-  chipText: { color: "#FFFFFF", fontSize: 12 },
-  votes: { fontSize: 16, color: "#E91E63", fontWeight: "bold" },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 10, lineHeight: 30 },
-  description: { fontSize: 16, color: "#424242", lineHeight: 24 },
 
-  supportButton: { marginTop: 15, borderRadius: 12, elevation: 2 },
+  chip: {
+    height: 28,
+    borderRadius: 20,
+  },
 
-  divider: { marginVertical: 20 },
-  sectionTitle: { fontSize: 18, marginBottom: 10, fontWeight: "bold" },
+  chipText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
+    lineHeight: 30,
+    color: "#222",
+  },
+
+  description: {
+    fontSize: 16,
+    color: "#555",
+    lineHeight: 24,
+  },
+
+  supportButton: {
+    marginTop: 15,
+    borderRadius: 14,
+    elevation: 2,
+  },
+
+  divider: {
+    marginVertical: 20,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    marginBottom: 10,
+    fontWeight: "bold",
+    color: "#333",
+  },
+
   mapContainer: {
     height: 200,
     width: "100%",
-    borderRadius: 10,
+    borderRadius: 16,
     overflow: "hidden",
     marginTop: 10,
   },
-  map: { ...StyleSheet.absoluteFillObject },
-  noLocationText: { color: "#757575", fontStyle: "italic", marginTop: 10 },
 
-  // Estilos de comentarios
-  commentInputContainer: { marginBottom: 20 },
-  commentInput: { backgroundColor: "#FFFFFF", borderRadius: 16 },
-  commentButton: { alignSelf: "flex-end", borderRadius: 12, marginTop: 8 },
-  commentsList: { paddingBottom: 30 },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+
+  noLocationText: {
+    color: "#757575",
+    fontStyle: "italic",
+    marginTop: 10,
+  },
+
+  commentInputContainer: {
+    marginBottom: 20,
+  },
+
+  commentInput: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+  },
+
+  commentButton: {
+    alignSelf: "flex-end",
+    borderRadius: 12,
+    marginTop: 8,
+  },
+
+  commentsList: {
+    paddingBottom: 30,
+  },
+
   noCommentsText: {
     color: "#757575",
     fontStyle: "italic",
     textAlign: "center",
     marginTop: 10,
   },
+
   commentBubble: {
-    backgroundColor: "#F5F5F5",
-    padding: 12,
+    backgroundColor: "#FFFFFF",
+    padding: 14,
     borderRadius: 16,
     marginBottom: 12,
+    elevation: 1,
   },
+
   commentHeader: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
   },
-  commentAuthor: { fontWeight: "bold", marginLeft: 8, color: "#333" },
-  commentText: { color: "#424242", lineHeight: 20 },
+
+  commentAuthor: {
+    fontWeight: "bold",
+    marginLeft: 8,
+    color: "#333",
+  },
+
+  commentText: {
+    color: "#424242",
+    lineHeight: 20,
+  },
+
   votesContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FCE4EC",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
   },
-  scrollContent: {
-    paddingBottom: 120,
-  },
+
   votesText: {
     marginLeft: 6,
     fontWeight: "bold",
-    color: "#E91E63",
+    color: "#7A1E48",
+  },
+
+  scrollContent: {
+    paddingBottom: 120,
   },
 });

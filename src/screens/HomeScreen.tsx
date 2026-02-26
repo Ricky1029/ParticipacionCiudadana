@@ -1,31 +1,12 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  TouchableOpacity,
+import { View, FlatList, StyleSheet, ActivityIndicator, Alert, TouchableOpacity,
 } from "react-native";
 import { Card, Title, Paragraph, Button, Chip, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// Importaciones de Firebase
-import {
-  collection,
-  query,
-  orderBy,
-  limit,
-  startAfter,
-  getDocs,
-  doc,
-  updateDoc,
-  increment,
-  setDoc,
-  getDoc,
-  DocumentData,
-  QueryDocumentSnapshot,
+
+import { collection, query, orderBy, limit, startAfter, getDocs, doc, updateDoc, increment, setDoc, getDoc, DocumentData, QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db, auth } from "../../firebaseConfig";
 import { signOut } from "firebase/auth";
@@ -274,7 +255,7 @@ export default function HomeScreen() {
   const renderHeader = () => (
     <SafeAreaView
     edges={["top"]}
-    style={{ backgroundColor: "#410525" }}
+    style={{ backgroundColor: "#7A1E48" }}
   >
     <View style={styles.header}>
       <View style={styles.headerContent}>
@@ -328,7 +309,8 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#faf6f8",
+    backgroundColor: "#f4f6f8",
+   
   },
   centerContainer: {
     flex: 1,
@@ -338,12 +320,17 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   header: {
-    padding: 20,
-    paddingBottom: 30,
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#410525",
+    marginBottom: 16,
+    paddingTop: 30,
+    paddingBottom: 35,
     paddingHorizontal: 20,
-    backgroundColor: "#410525",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    backgroundColor:  "#7A1E48",
+    
+
+   
   },
   headerContent: {
     flexDirection: "row",
@@ -354,24 +341,32 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   title: {
-    color: "#FFFFFF",
-    fontSize: 26,
-    fontWeight: "bold",
+      color: "#FFFFFF",
+      fontSize: 28,
+      fontWeight: "700",
+      letterSpacing: 0.5,
   },
   subtitle: {
-    color: "#f3d9e3",
-    fontSize: 14,
-    marginTop: 6,
+      color: "#f3d9e3",
+      fontSize: 13,
+      marginTop: 6,
+      lineHeight: 18,
   },
   card: {
-    marginHorizontal: 16,
-    marginVertical: 12,
-    borderRadius: 20,
-    elevation: 6,
-    backgroundColor: "#ffffff",
+      marginHorizontal: 16,
+      marginVertical: 10,
+      borderRadius: 22,
+      backgroundColor: "#ffffff",
+      elevation: 4,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.08,
+      shadowRadius: 8,
   },
   cardImage: {
-    height: 170,
+    height: 180,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
   },
   cardHeader: {
     flexDirection: "row",
@@ -410,7 +405,8 @@ const styles = StyleSheet.create({
   },
   voteButton: {
     borderRadius: 30,
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
+    elevation: 2,
   },
   footerLoader: {
     flexDirection: "row",
@@ -421,9 +417,9 @@ const styles = StyleSheet.create({
   voteBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8e4ec",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: "#fce4ec",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 20,
   },
 });

@@ -184,8 +184,9 @@ export default function RankingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F4F6F8",
   },
+
   centerContainer: {
     flex: 1,
     justifyContent: "center",
@@ -193,81 +194,87 @@ const styles = StyleSheet.create({
     padding: 20,
     marginTop: 50,
   },
+
   header: {
     paddingVertical: 28,
     paddingHorizontal: 20,
-    backgroundColor: "#410525",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    backgroundColor: "#7A1E48",
+    elevation: 4,
   },
+
   title: {
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "bold",
   },
+
   subtitle: {
-    color: "#f3d9e3",
+    color: "#F3D9E3",
     fontSize: 14,
     marginTop: 6,
   },
+
   listContainer: {
     padding: 16,
     marginTop: -10,
     paddingBottom: 40,
   },
+
   card: {
     marginBottom: 14,
     borderRadius: 16,
     elevation: 2,
     backgroundColor: "#FFFFFF",
   },
-  topThreeCard: {
-    borderWidth: 1,
-    borderColor: "#f3d9e3",
-    elevation: 3,
-  },
+
   cardContent: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 14,
   },
+
   leftSection: {
     width: 60,
     alignItems: "center",
     justifyContent: "center",
   },
+
   middleSection: {
     flex: 1,
     paddingHorizontal: 8,
   },
+
   proposalTitle: {
     fontSize: 16,
     marginBottom: 8,
     color: "#333",
-    fontWeight: "bold", // Le agregué negrita para que resalte más
+    fontWeight: "bold",
   },
+
   rightSection: {
     alignItems: "center",
     justifyContent: "center",
     paddingLeft: 8,
   },
-  votes: {
-    fontSize: 18,
-  },
+
   votesNumber: {
     fontSize: 18,
-    color: "#E91E63",
+    color: "#7A1E48",
     marginTop: 2,
     fontWeight: "bold",
   },
+
   chip: {
     alignSelf: "flex-start",
     paddingHorizontal: 1,
+    borderRadius: 20,
   },
+
   chipText: {
     color: "#FFFFFF",
     fontSize: 12,
   },
+
   firstCard: {
     backgroundColor: "#FFF8E1",
     borderWidth: 2,

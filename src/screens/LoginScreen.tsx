@@ -187,45 +187,62 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#410525",
+    backgroundColor: "#F4F6F8",
   },
+
   scrollContent: {
     flexGrow: 1,
     paddingTop: 80,
     padding: 20,
   },
+
   header: {
     alignItems: "center",
-  marginBottom: 40,
+    marginBottom: 40,
+    backgroundColor: "#7A1E48",
+    paddingVertical: 30,
+    borderRadius: 24,
+    elevation: 4,
   },
+
   title: {
     fontSize: 26,
-    fontWeight: "bold",
+    fontWeight: "700",
+    letterSpacing: 0.8,
     color: "#ffffff",
     marginTop: 12,
   },
+
   subtitle: {
     fontSize: 15,
-    color: "#f3d9e3",
+    color: "#F3D9E3",
     marginTop: 6,
     textAlign: "center",
   },
+
   card: {
     borderRadius: 24,
-  paddingVertical: 20,
-  elevation: 8,
-  backgroundColor: "#ffffff",
+    paddingVertical: 20,
+    elevation: 6,
+    backgroundColor: "#ffffff",
   },
+
   input: {
     marginBottom: 16,
+    backgroundColor: "#FFFFFF",
   },
+
   button: {
     marginTop: 8,
     marginBottom: 12,
+    borderRadius: 12,
+    elevation: 2,
   },
+
   buttonContent: {
     paddingVertical: 8,
   },
+
   switchButton: {
     marginTop: 4,
   },

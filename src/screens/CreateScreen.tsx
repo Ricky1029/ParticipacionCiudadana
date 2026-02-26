@@ -1,25 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  ActivityIndicator,
-  Alert,
+import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Image, ActivityIndicator, Alert,
 } from "react-native";
-import {
-  TextInput,
-  Button,
-  Title,
-  Paragraph,
-  Menu,
-  Text,
-  Snackbar,
-  IconButton,
-  Portal,
-  Dialog,
+import { TextInput, Button, Title, Paragraph, Menu, Text, Snackbar, IconButton, Portal, Dialog,
 } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
@@ -272,6 +254,7 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
               mode="contained"
               buttonColor="#410525"
               textColor="#ffffff"
+              style={{ borderRadius: 14 }}
               onPress={() => setImageDialogVisible(true)}
               disabled={isLoading}
             >
@@ -394,14 +377,16 @@ export default function CreateScreen({ onCreateProposal }: CreateScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F5F5F5" },
+  container: { flex: 1, backgroundColor: "#f4f6f8" },
   scrollView: { flex: 1 },
   header: {
     paddingVertical: 28,
+    backgroundColor: "#7A1E48",
+    paddingTop: 35,
+    paddingBottom: 40,
     paddingHorizontal: 20,
-    backgroundColor: "#410525",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    elevation: 6,
+    marginBottom: 50,
   },
   title: {
     color: "#FFFFFF",
@@ -413,11 +398,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 6,
   },
-  form: { padding: 20, marginTop: -20 },
-  input: { marginBottom: 16, backgroundColor: "#FFFFFF" },
+  form: { 
+    marginTop: -30,
+    marginHorizontal: 16,
+    padding: 20,
+    borderRadius: 20,
+    backgroundColor: "#ffffff",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+ },
+  input: {
+     marginBottom: 16,
+      backgroundColor: "#ffffff",
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: "#E0E0E0",
+
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+     },
   textArea: { minHeight: 120 },
   menuContainer: { marginBottom: 20 },
-  label: { fontSize: 16, color: "#666", marginBottom: 8 },
+  label: { 
+    fontSize: 16, 
+    color: "#666", 
+    marginBottom: 6,
+    marginTop: 12,
+    fontWeight: "500",},
   menuButton: {
     justifyContent: "space-between",
     borderRadius: 16,
@@ -430,7 +442,12 @@ const styles = StyleSheet.create({
   imageSection: { marginBottom: 20 },
   imageScroll: { marginTop: 10, flexDirection: "row" },
   imagePreviewContainer: { marginRight: 10, position: "relative" },
-  imagePreview: { width: 100, height: 100, borderRadius: 16 },
+  imagePreview: { 
+    width: 100,
+    height: 100,
+    borderRadius: 16,
+    elevation: 3,
+  },
   removeIcon: {
     position: "absolute",
     top: -10,
@@ -443,11 +460,12 @@ const styles = StyleSheet.create({
   mapWrapper: {
     height: 220,
     width: "100%",
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: "hidden",
     marginTop: 8,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
+    borderColor: "#eee",
+    elevation: 2,
   },
   map: {
     ...StyleSheet.absoluteFillObject,
@@ -462,7 +480,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  submitButton: { marginTop: 20, borderRadius: 16, elevation: 3 },
+  submitButton: { marginTop: 25, borderRadius: 18, elevation: 5 },
   submitButtonContent: { paddingVertical: 8 },
   snackbar: { backgroundColor: "#43A047" },
   dialogActions: {
