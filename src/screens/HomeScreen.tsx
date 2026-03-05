@@ -292,6 +292,7 @@ export default function HomeScreen() {
   return (
     <FlatList
       style={styles.container}
+      contentContainerStyle={{ paddingBottom: 100 }}
       data={proposals}
       renderItem={renderProposal}
       keyExtractor={(item) => item.id}
